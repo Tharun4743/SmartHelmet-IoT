@@ -1,0 +1,141 @@
+#include <Wire.h>
+#include <LiquidCrystal_I2C.h>
+#include <RH_ASK.h>
+#include <SPI.h>
+
+// LCD and RF setup
+LiquidCrystal_I2C lcd(0x27, 16, 2);  // I2C address 0x27, 16 columns, 2 rows
+RH_ASK rf_driver(2000, 11, 12, 0);   // Data rate 2000bps, RX pin 11, TX pin 12
+
+// Pins
+const int ignitionRelay = 4;  // Relay to control motor
+const int buzzerPin = 5;      // Buzzer for alerts
+
+// Data variables
+String str_helmet = "0", str_alcohol = "0", str_sleep = "0";
+int helmetStatus = 0, alcoholLevel = 0, sleepStatus = 0;
+bool engineState = false;
+
+// Timeout & page switching
+unsigned long lastReceivedTime = 0;
+const unsigned long timeout = 5000;
+int page = 0, lastPage = -1;
+unsigned long lastPageSwitch = 0;
+const unsigned long pageInterval = 3000;
+
+void setup() {
+  Serial.begin(115200);
+  rf_driver.init();
+
+  pinMode(ignitionRelay, OUTPUT);
+  pinMode(buzzerPin, OUTPUT);
+  digitalWrite(ignitionRelay, LOW);  // Motor OFF initially
+  digitalWrite(buzzerPin, LOW);      // Buzzer OFF initially
+
+  lcd.init();
+  lcd.backlight();
+
+  // Startup screen
+  lcd.setCursor(0, 0);
+  lcd.print("Smart Helmet");
+  lcd.setCursor(0, 1);
+  lcd.print("Agile Innovators");
+  delay(2000);
+  lcd.clear();
+}
+
+void loop() {
+  uint8_t buf[20];
+  uint8_t buflen = sizeof(buf);
+
+  // Receive RF data
+  if (rf_driver.recv(buf, &buflen)) {
+    String str_out = String((char*)buf);
+    lastReceivedTime = millis();
+
+    int comma1 = str_out.indexOf(',');
+    int comma2 = str_out.lastIndexOf(',');
+
+    if (comma1 > 0 && comma2 > comma1) {
+      str_helmet = str_out.substring(0, comma1);
+      str_alcohol = str_out.substring(comma1 + 1, comma2);
+      str_sleep = str_out.substring(comma2 + 1);
+
+      helmetStatus = str_helmet.toInt();
+      alcoholLevel = str_alcohol.toInt();
+      sleepStatus = str_sleep.toInt();
+
+      // Motor control logic
+      engineState = (helmetStatus == 1 && alcoholLevel == 0);
+
+      if (engineState) {
+        digitalWrite(ignitionRelay, HIGH);  // Turn ON motor
+        Serial.println("Motor ON");
+      } else {
+        digitalWrite(ignitionRelay, LOW);   // Turn OFF motor
+        Serial.println("Motor OFF");
+      }
+
+      // Buzzer alert for sleep, alcohol, or offline
+      digitalWrite(buzzerPin, (sleepStatus || alcoholLevel || page == 99) ? HIGH : LOW);
+
+      Serial.print("Received: ");
+      Serial.println(str_out);
+    }
+  }
+
+  // Handle timeout
+  if (millis() - lastReceivedTime > timeout) {
+    if (page != 99) {
+      digitalWrite(buzzerPin, HIGH);
+      digitalWrite(ignitionRelay, LOW);  // Turn OFF motor for safety
+      lcd.clear();
+      lcd.print("No Data Received");
+      lcd.setCursor(0, 1);
+      lcd.print("System Offline");
+      page = 99;
+    }
+    return;
+  }
+
+  // Page switching
+  if (millis() - lastPageSwitch > pageInterval) {
+    lastPageSwitch = millis();
+    page = (page + 1) % 3;  // 3 pages: Helmet/Alcohol, Sleep/Motor, Branding
+    delay(200);
+  }
+
+  // Refresh LCD only if page changed
+  if (page != lastPage) {
+    lcd.clear();
+    lastPage = page;
+  }
+
+  // Display content based on page
+  switch (page) {
+    case 0:
+      lcd.setCursor(0, 0);
+      lcd.print("Helmet: ");
+      lcd.print(helmetStatus ? "Yes" : "No ");
+      lcd.setCursor(0, 1);
+      lcd.print("Alcohol: ");
+      lcd.print(alcoholLevel ? "Yes" : "No ");
+      break;
+
+    case 1:
+      lcd.setCursor(0, 0);
+      lcd.print("Sleep: ");
+      lcd.print(sleepStatus ? "Yes" : "No ");
+      lcd.setCursor(0, 1);
+      lcd.print("Motor: ");
+      lcd.print(engineState ? "Running" : "Stopped");
+      break;
+
+    case 2:
+      lcd.setCursor(0, 0);
+      lcd.print("Agile Innovators");
+      lcd.setCursor(0, 1);
+      lcd.print("Smart Helmet");
+      break;
+  }
+}
