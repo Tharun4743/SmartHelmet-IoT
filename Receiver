@@ -105,7 +105,7 @@ void loop() {
     delay(200);
   }
 
-  // Refresh LCD only if page changed
+  // Refresh LCD only if the page changed
   if (page != lastPage) {
     lcd.clear();
     lastPage = page;
