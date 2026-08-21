@@ -207,7 +207,7 @@ The bike unit LCD cycles through 3 informational pages:
 - 🏥 **Emergency SOS** — Auto-alert system to notify hospitals and police on accident detection
 - 📱 **Mobile Dashboard** — Real-time monitoring app for parents/fleet managers
 - 🔋 **Power Optimization** — Ultra-low-power design for real-world helmet integration
-- 🌐 **Cloud Logging** — Store ride safety data to cloud for analytics
+- 🌐 **Cloud Logging** — Store ride safety data to cloud for analytics.
 
 ---
 
