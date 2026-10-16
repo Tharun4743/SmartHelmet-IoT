@@ -57,6 +57,19 @@ The **Smart Helmet IoT Safety System** is a dual-unit embedded hardware platform
 ---
 
 ## 4. ⚙️ Technical Approach & System Architecture
+
+### 📐 High-Level Architectural Flowchart:
+```mermaid
+graph TD
+    IRSensor["Infrared Head Proximity Sensor"] -->|Wear Status| MCU["Microcontroller Core (ESP32 / Arduino)"]
+    MQ3["MQ-3 Alcohol Gas Sensor"] -->|BAC Vapor Level| MCU
+    EyeSensor["Eye-Blink Drowsiness Detection Sensor"] -->|Closure Duration| MCU
+    MCU --> Logic{"Safety Criteria Met? (Worn, Sober, Alert)"}
+    Logic -->|All Clear| RFRelay["RF 433MHz Wireless Transmitter"]
+    RFRelay --> BikeUnit["Vehicle Ignition Interlock Relay (Engine Start Enable)"]
+    Logic -->|Hazard Triggered| Alarm["Piezo Siren & GSM Emergency SMS Dispatch"]
+```
+
 ### ⚙️ Hardware Architecture & Interlock Logic
 
 | Unit | Hardware Component | Specific Functional Role |
