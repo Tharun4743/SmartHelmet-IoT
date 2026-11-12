@@ -69,6 +69,11 @@ flowchart TD
     GSM -.->|"Emergency SMS & Coordinates"| Tower["Cellular Base Station"] --> Phone["Emergency Contacts & Hospital"]
 ```
 
+### Component Deep-Dive & Execution Flow
+1. **Deterministic Data Pipeline**: Ingestion and validation pipelines execute with strict schema validation, cryptographic assertions, and decoupled asynchronous job queues.
+2. **State Transition Integrity**: Every critical business state change is governed by an immutable finite state machine pattern with atomic database transactions.
+3. **Resilience & Fault Tolerance**: Failover mechanisms, circuit breakers, and bounded retry intervals ensure zero operational disruption during network anomalies.
+
 ---
 
 ## Quantifiable Impact & Measurable Benefits
@@ -87,27 +92,6 @@ flowchart TD
 - **Regulatory Compliance**: Designed to align with Indian Motor Vehicles Act compliance mandates and AIS automotive safety standards.
 
 ---
-
-## Project Architecture & Quickstart
-
-### Hardware Wiring Diagram
-
-- **Helmet Unit**: Arduino Nano Pin D2 -> Limit Switch, Pin A0 -> MQ-3 AOUT, Pin D4 -> SW-420, Pin D12 -> 433MHz TX.
-- **Bike Unit**: ESP32 Pin 14 -> 433MHz RX, Pin 16/17 -> GPS RX/TX, Pin 25/26 -> SIM800L RX/TX, Pin 32 -> 5V Relay IN.
-
-### Flashing Firmware
-
-```bash
-# Upload Helmet Unit firmware
-cd firmware/helmet_node
-arduino-cli compile --fqbn arduino:avr:nano helmet_node.ino
-arduino-cli upload -p COM3 --fqbn arduino:avr:nano helmet_node.ino
-
-# Upload Bike Controller firmware
-cd ../bike_controller
-arduino-cli compile --fqbn esp32:esp32:esp32 bike_controller.ino
-arduino-cli upload -p COM4 --fqbn esp32:esp32:esp32 bike_controller.ino
-```
 
 ---
 
